@@ -7,3 +7,6 @@ It is a lib / engine for PCE, for the moment it supports:
  - sprites and animation
  - text and score display
  - horizontal scrolling
+
+I thank Touko for his help, and for answering my many questions !  
+
