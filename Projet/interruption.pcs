@@ -1,0 +1,85 @@
+
+wait_vblank:
+		pha
+		stz _vblanki+0
+		stz _vblanki+1
+		lda #$01
+		sta _vblank
+		-:
+			sed
+			lda _vblanki+0
+			clc
+			adc #1
+			sta _vblanki+0
+			lda _vblanki+1
+			adc #0
+			sta _vblanki+1
+			cld
+			lda _vblank
+		bne -
+		pla
+	
+	rts
+	
+vblank0:
+	;X scroll
+	st0 #BXR
+	lda LKP_BG.x+0
+	sta LKP_ST.arg2
+	
+	lda LKP_BG.x+1
+	sta LKP_ST.arg3
+	
+	jsr LKP_ST.opc2
+	
+	;Y scroll
+	st0 #BYR
+	lda LKP_BG.y+0
+	sta LKP_ST.arg2
+	
+	lda #0
+	sta LKP_ST.arg3
+	
+	jsr LKP_ST.opc2
+
+	rts
+
+vdc_int:
+VDC_INT:
+
+		pha
+		phx
+		phy
+		
+		lda.w  VDC_STATUS
+		sta MEM_TEMP
+		and #$20
+		beq +
+			PCE_VDC RCR , $0127
+			jsr vblank0
+			
+			stz _vblank	
+			bra ++ 
+		+:
+			PCE_VDC BYR , 232
+			PCE_VDC BXR , $00F0
+			jsr LKP_READ_IO
+			jsr LKP_Sprite_array_VDC
+			stz LKP_DMAT
+																	
+		++:												
+				
+		lda MEM_TEMP
+		sta VDC_STATUS
+		
+		ply
+		plx
+		pla
+	
+	rti
+	
+nmi:
+timer:
+irq:
+
+	rti

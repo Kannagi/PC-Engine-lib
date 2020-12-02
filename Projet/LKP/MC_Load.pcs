@@ -1,0 +1,6 @@
+
+.MACRO LKP_Load_PalBG
+	immw \1,LKP_MEM_TEMP
+	jsr LKP_Load_PalBGF
+	
+.ENDM

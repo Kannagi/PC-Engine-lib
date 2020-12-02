@@ -1,0 +1,79 @@
+
+
+.MACRO LKP_printfs
+
+	immw \1,LKP_MEM_TEMP
+	PCE_VDC MAWR,(\2 + \3*$40 + 30)	
+	
+	jsr LKP_printfs_draw
+	
+.ENDM
+
+.MACRO LKP_printf_cpu
+	
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)	
+	
+	jsr LKP_print_cpu
+	
+.ENDM
+
+
+.MACRO LKP_printf8
+
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printf8_draw
+
+.ENDM
+
+.MACRO LKP_printf8u
+
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printfu8_draw
+
+.ENDM
+
+.MACRO LKP_printf8h
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printh8_draw
+.ENDM
+
+.MACRO LKP_printf16h
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printh16_draw
+.ENDM
+
+
+.MACRO LKP_printfd2
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printd2
+.ENDM
+
+.MACRO LKP_printfd4
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printd4
+.ENDM
+
+.MACRO LKP_printfd6
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printd6
+.ENDM
+
+.MACRO LKP_printfd8
+	
+	PCE_VDC MAWR,(\1 + \2*$40 + 30)
+	
+	jsr LKP_printd8
+.ENDM

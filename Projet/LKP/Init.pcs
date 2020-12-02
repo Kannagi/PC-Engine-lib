@@ -1,0 +1,221 @@
+
+LKP_Init:
+	lda    #$E3    ; // TIA instruction opcode
+	sta    LKP_TIA.opc
+	lda    #$60    ; // RTS instruction opcode
+	sta     LKP_TIA.ret 
+	sta     LKP_ST.ret 
+	
+	lda    #$03 
+	sta    LKP_ST.opc1
+	
+	lda    #$13
+	sta    LKP_ST.opc2
+	
+	lda    #$23
+	sta    LKP_ST.opc3
+
+	rts
+	
+LKP_Init_vram_hud:
+	PCE_VDC MAWR,$0040*29
+	
+	st0 #VWR
+	
+	ldx #64
+	lda #$A0
+	-:
+		
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+		
+		dex
+	bne -
+
+
+	rts
+	
+LKP_Init_vram_all:
+
+	PCE_VDC MAWR,$0000
+	
+	st0 #VWR
+	lda #$80
+
+	ldx #128
+	-:
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+		
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		dex
+	bne -
+	
+
+
+	
+	PCE_VDC MAWR,$0800
+	
+	st0 #VWR
+	
+	cla
+	ldy #16
+	--:
+		ldx #255
+		-:
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+			
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+			
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+			
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+			
+			sta.w VDC_DATAL
+			sta.w VDC_DATAH
+			
+			dex
+		bne -
+		dey
+	bne --
+
+	rts
+
+
+	
+LKP_Clear_ram:
+
+	ldx #$FF
+	-:
+		stz $2000,x
+		;stz $2100,x
+		stz $2200,x
+		stz $2300,x
+		stz $2400,x
+		stz $2500,x
+		stz $2600,x
+		stz $2700,x
+		stz $2800,x
+		stz $2900,x
+		stz $2A00,x
+		stz $2B00,x
+		stz $2C00,x
+		stz $2D00,x
+		stz $2E00,x
+		stz $2F00,x
+		
+		stz $3000,x
+		stz $3100,x
+		stz $3200,x
+		stz $3300,x
+		stz $3400,x
+		stz $3500,x
+		stz $3600,x
+		stz $3700,x
+		stz $3800,x
+		stz $3900,x
+		stz $3A00,x
+		stz $3B00,x
+		stz $3C00,x
+		stz $3D00,x
+		stz $3E00,x
+		stz $3F00,x
+
+		dex
+	bne -
+
+	stz $2000,x
+	;stz $2100,x
+	stz $2200,x
+	stz $2300,x
+	stz $2400,x
+	stz $2500,x
+	stz $2600,x
+	stz $2700,x
+	stz $2800,x
+	stz $2900,x
+	stz $2A00,x
+	stz $2B00,x
+	stz $2C00,x
+	stz $2D00,x
+	stz $2E00,x
+	stz $2F00,x
+	
+	stz $3000,x
+	stz $3100,x
+	stz $3200,x
+	stz $3300,x
+	stz $3400,x
+	stz $3500,x
+	stz $3600,x
+	stz $3700,x
+	stz $3800,x
+	stz $3900,x
+	stz $3A00,x
+	stz $3B00,x
+	stz $3C00,x
+	stz $3D00,x
+	stz $3E00,x
+	stz $3F00,x
+	rts
+	

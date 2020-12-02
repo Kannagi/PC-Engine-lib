@@ -1,0 +1,175 @@
+
+.STRUCT SLKP_TIA
+opc		db
+src		dw
+dst		dw
+size		dw
+ret		db
+.ENDST
+
+.STRUCT SLKP_ST
+opc1		db
+arg1		db
+opc2		db
+arg2		db
+opc3		db
+arg3		db
+ret		db
+.ENDST
+
+
+.STRUCT SSPR_ARRAY
+y		dw
+x		dw
+tile		dw
+palfs		dw
+.ENDST
+
+.STRUCT SLKP_BG
+y		db
+x		dw
+dirx		db
+diry		db
+bank		db
+offset	db
+index	dw
+.ENDST
+
+.STRUCT SLKP_LKP_STDCTRL
+B1			DB
+B2			DB
+
+SELECT		DB
+START		DB
+
+UP 			DB
+RIGHT		DB
+DOWN		DB
+LEFT			DB
+.ENDST
+
+.STRUCT SLKP_DMA
+src		dw
+dst		dw
+lut		dw
+vram	dw
+size		dw
+bank		db
+tsz		db
+enable	db
+hsz		db
+.ENDST
+
+.STRUCT SLKP_ANIM
+i		db
+l		db
+n		db
+c		db
+act		db
+old		db
+.ENDST
+
+.STRUCT SLKP_HERO
+x		dw
+y		dw
+palfs		dw
+tile		dw
+act		db
+old		db
+jump	db
+life		db
+bomb	db
+score	dsb 3
+.ENDST
+
+
+;--------------------------------------------
+
+.ENUM $0000
+MEM_TEMP		DSB $10
+MEM_TEMPFUNC	DSB $10
+LKP_MEM_TEMP	DSB $20
+LKP_TEMP_RET		DB
+_END_RAM_		DB
+.ENDE
+
+.ENUM $2100
+LKP_TIA			INSTANCEOF SLKP_TIA
+LKP_ST			INSTANCEOF SLKP_ST
+_END_RAM_2		DB
+
+.ENDE
+
+
+
+.ENUM $2200
+SPR_ARRAY		INSTANCEOF SSPR_ARRAY 16
+SPR_ARRAY_ADDR	DB 
+
+LKP_BG			INSTANCEOF SLKP_BG 1
+LKP_DMA			INSTANCEOF SLKP_DMA 19
+LKP_anim			INSTANCEOF SLKP_ANIM 24
+LKP_DMAT		DB
+LKP_JOYPAD		INSTANCEOF SLKP_LKP_STDCTRL 2
+LKP_JOYPAD1		DB 
+LKP_JOYPAD2		DB
+;-------
+_vblank			DB 
+_vblanki			DW
+
+animpal			DB 
+animpal_i			DB
+
+LKP_HERO		INSTANCEOF SLKP_HERO 2
+_END_RAM_3		DB
+.ENDE
+
+.PRINTV HEX _END_RAM_
+.PRINTT " - "
+.PRINTV HEX _END_RAM_2
+.PRINTT " - "
+.PRINTV HEX _END_RAM_3
+
+
+.DEFINE MPR0 $01 ;000 0
+.DEFINE MPR1 $02 ;001 2
+.DEFINE MPR2 $04 ;010 4
+.DEFINE MPR3 $08 ;011 6
+.DEFINE MPR4 $10 ;100 8
+.DEFINE MPR5 $20 ;101 A
+.DEFINE MPR6 $40 ;110 C
+.DEFINE MPR7 $80 ;111 E
+
+
+.DEFINE MPR0ADDR $0000
+.DEFINE MPR1ADDR $2000 
+.DEFINE MPR2ADDR $4000 
+.DEFINE MPR3ADDR $6000 
+.DEFINE MPR4ADDR $8000
+.DEFINE MPR5ADDR $A000
+.DEFINE MPR6ADDR $C000
+.DEFINE MPR7ADDR $E000
+
+
+.DEFINE 	JPD1			$00
+.DEFINE 	JPD2			$08
+.DEFINE 	SPRT			$08
+
+
+.MACRO LKP_ANIM_INIT
+
+	ldy  #\1*6
+	lda #\2
+	sta LKP_anim.n,y
+	
+	lda #\3
+	sta LKP_anim.c,y
+
+	cla
+	sta LKP_anim.i,y
+	sta LKP_anim.l,y
+	sta LKP_anim.act,y
+	
+	lda #$FF
+	sta LKP_anim.old,y
+.ENDM

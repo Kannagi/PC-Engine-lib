@@ -1,0 +1,468 @@
+
+
+.include "header.pcs"
+.include "pce.pcs"
+
+.include "variable.pcs"
+.include "MC_libkp.pcs"
+
+.org $1F70
+start:
+	PCE_INIT
+	jsr LKP_Init_vram_all
+	jmp Main
+	
+.org $0000
+
+
+
+
+Main:	
+	jsr LKP_Init
+	jsr LKP_Clear_ram
+	
+	     
+	LKP_Load_PalBG pal_list
+	jsr load_pal
+	jsr load_bg  
+	jsr load_sprites
+	
+	;-------
+	jsr init_game
+	
+	;--init BG
+	lda #$00
+	sta LKP_BG.x
+	
+	lda #$01
+	sta  LKP_BG.x+1
+	
+	lda #-$08
+	sta  LKP_BG.y
+	
+	lda #:map_tile
+	sta LKP_BG.bank
+	stz LKP_BG.offset
+	
+	immw INDEX_MAP,LKP_BG.index
+	
+	
+	jsr LKP_BG_initsc
+	;-----
+	
+	LKP_printfs Text_3,0,29
+	
+	;Game
+	lda #$05
+	sta IRQ_DISABLE	;IRQ mask, INTS OFF
+	
+	lda #$05
+	sta VDC_STATUS
+	
+	PCE_VDC CR,$00CC
+	cli	
+	
+	jsr wait_vblank
+
+	LKP_ANIM_INIT 0,4,8
+
+main_loop:
+	jsr LKP_ScrollingX
+	;jsr update_pal
+	
+	
+	jsr Sprite_Anim
+
+	;inc  LKP_BG.y
+	
+	jsr Text
+	;------------------------
+	
+	jsr LKP_joypad
+	
+	jsr Gameplay
+	
+	
+	;------------------------
+	jsr wait_vblank
+
+
+	jmp main_loop  
+	
+Sprite_Anim:
+
+	cly
+	jsr LKP_Anim
+	
+	;--------
+	
+	
+	lda LKP_TEMP_RET
+	cmp #0
+	bne +
+	
+		rts
+	+:
+	
+	immw DATA_Hero_Anim_LUT,LKP_MEM_TEMP
+	cly
+	lda LKP_anim.act,y
+	asl
+	asl
+	asl
+	asl
+	tay
+	
+	
+	clx
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.size+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.size+1,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.vram+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.vram+1,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.src+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.src+1,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.lut+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.lut+1,x
+	iny
+	
+	;----
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.bank+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.tsz+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_DMA.hsz+0,x
+	iny
+	;-
+	clx
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_anim.n+0,x
+	iny
+	
+	lda [LKP_MEM_TEMP+0],y
+	sta LKP_anim.c+0,x
+
+	;----
+	
+	
+	lda #1
+	sta  LKP_DMA.enable,x
+	
+	
+	;addiw LKP_DMA.lut,2*3
+	
+
+	lda LKP_anim.i,x
+	asl
+	asl
+	asl
+	clc
+	adc LKP_DMA.lut
+	sta LKP_DMA.lut
+	lda LKP_DMA.lut+1
+	adc #0
+	sta  LKP_DMA.lut+1
+	
+	cly
+	jsr LKP_Sprites_Update
+
+	rts
+	
+
+DATA_Hero_Anim_LUT:
+	.dw $100,$5600,Hero1_A,MT_Hero_1
+	.db :Hero1_A,6,3*2,1,255,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_B,MT_Hero_2
+	.db :Hero1_B,6,3*2,4,8,0
+	.dw 0
+	
+	
+	.dw $180,$5600,Hero1_A,MT_Hero_3
+	.db :Hero1_A,3,1*2,1,255,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_A,MT_Hero_4
+	.db :Hero1_A,6,4*2,1,255,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_B,MT_Hero_5
+	.db :Hero1_B,6,3*2,4,8,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_A,MT_Hero_6
+	.db :Hero1_B,6,3*2,4,8,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_A,MT_Hero_1
+	.db :Hero1_A,6,3*2,2,8,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_A,MT_Hero_4
+	.db :Hero1_A,6,4*2,2,8,0
+	.dw 0
+	
+	.dw $180,$5600,Hero1_A,MT_Hero_3
+	.db :Hero1_A,3,1*2,2,8,0
+	.dw 0
+	
+	.dw $100,$5600,Hero1_A,MT_Hero_7
+	.db :Hero1_A,6,2*2,1,255,0
+	.dw 0
+	
+LKP_Anim:
+	stz LKP_TEMP_RET
+	
+	lda LKP_anim.act,y
+	cmp LKP_anim.old,y
+	beq +
+		sta LKP_anim.old,y
+		cla
+		sta  LKP_anim.i,y
+		sta  LKP_anim.l,y
+		ina
+		sta LKP_TEMP_RET
+	+:
+	
+
+	lda LKP_anim.l,y
+	ina
+	sta LKP_anim.l,y
+	cmp  LKP_anim.c,y
+	bne +
+		cla
+		sta  LKP_anim.l,y
+		ina
+		sta LKP_TEMP_RET
+		lda LKP_anim.i,y
+		ina 
+		sta LKP_anim.i,y
+	+:
+
+	lda LKP_anim.i,y
+	cmp  LKP_anim.n,y
+	bne +
+		cla
+		sta  LKP_anim.i,y
+		ina
+		ina
+		sta LKP_TEMP_RET
+	+:
+	rts
+	
+	
+Text:
+	LKP_printf_cpu 16,29
+		
+	indw _vblanki,LKP_MEM_TEMP
+	LKP_printfd4,20,29
+	
+	
+	
+	lda LKP_HERO.life
+	sta LKP_MEM_TEMP
+	LKP_printfd2,1,29
+	
+	lda LKP_HERO.bomb
+	sta LKP_MEM_TEMP
+	LKP_printfd2,5,29
+	
+	indw  LKP_HERO.score,LKP_MEM_TEMP
+	lda  LKP_HERO.score+2
+	sta LKP_MEM_TEMP+2
+	LKP_printfd6 9,29
+	
+	
+	lda LKP_anim.i
+	LKP_printf8u,25,29
+	rts
+
+
+INDEX_MAP:
+	.db 0,1,0,2,1,0,2,3,4,5,4,7,5,6
+	
+	
+Text_3:
+	.db "L12 B12 S",0
+	
+Text_CPU:
+	.db "%",0
+Text_1:
+	.db "PV:",0
+	
+Text_2:
+	.db "SCORE:",0
+
+	.include "gameplay.pcs"
+
+	.include "load.pcs"
+	.include "interruption.pcs"
+	.include "init.pcs"
+	
+	
+	
+pal_list:
+	.dw pallette_tile0,pallette_tile1,pallette_tile2,pallette_tile3  ,pallette_tile4  ,pallette_tile5   ,pallette_tile6   ,pallette_tile7
+	.dw pallette_tile8,pallette_tile9,pallette_tile10,pallette_tile11,pallette_tile12,pallette_tile13,pallette_tile14
+	
+    
+.org $1FF6
+.dw irq
+.dw vdc_int
+.dw timer
+.dw nmi
+.dw start
+
+.bank 1 slot 2
+.org $00
+
+	.include "libkp.pcs"
+
+.bank 2 slot 1
+.org $00
+
+	
+map_tile:
+	.incbin "DATA/map1/map.ktm"
+	
+
+font1:
+	.include "DATA/text.asm"
+	
+pallette_tile0:
+	.incbin "DATA/map1/maptile_0.pal"
+pallette_tile1:
+	.incbin "DATA/map1/maptile_1.pal"
+pallette_tile2:
+	.incbin "DATA/map1/maptile_2.pal"
+pallette_tile3:
+	.incbin "DATA/map1/maptile_3.pal"
+pallette_tile4:
+	.incbin "DATA/map1/maptile_4.pal"
+pallette_tile5:
+	.incbin "DATA/map1/maptile_5.pal"
+pallette_tile6
+	.incbin "DATA/map1/maptile_6.pal"
+pallette_tile7:
+	.incbin "DATA/map1/maptile_7.pal"
+pallette_tile8:
+	.incbin "DATA/map1/maptile_8.pal"
+pallette_tile9:
+	.incbin "DATA/map1/maptile_9.pal"
+pallette_tile10:
+	.incbin "DATA/map1/maptile_10.pal"
+pallette_tile11:
+	.incbin "DATA/map1/maptile_11.pal"
+pallette_tile12:
+	.incbin "DATA/map1/maptile_12.pal"
+pallette_tile13:
+	.incbin "DATA/map1/maptile_13.pal"
+pallette_tile14:
+	.incbin "DATA/map1/maptile_14.pal"
+	;.incbin "DATA/map1/maptile_14.pal" skip 2
+pallette_C1:
+    .dw  $0020,$0002,$0050,$00db,$0124,$01b6,$00f2,$00a9,$0133,$0007,$0087,$0174,$008a,$0000,$00a0,$0117
+
+	
+pallette_Hero1:
+	.incbin "DATA/hero/hero1.pal"
+	
+.bank 3 slot 1
+.org $00
+tile0:
+	.incbin "DATA/map1/maptile_0.spr"
+tile1:
+	.incbin "DATA/map1/maptile_1.spr"
+
+
+	
+.bank 4 slot 1
+.org $00
+tile2:
+	.incbin "DATA/map1/maptile_2.spr"
+tile3:
+	.incbin "DATA/map1/maptile_3.spr"
+
+tile4:
+	.incbin "DATA/map1/maptile_4.spr"
+tile5:
+	.incbin "DATA/map1/maptile_5.spr"
+
+
+.bank 5 slot 1
+.org $00
+
+tile7:
+	.incbin "DATA/map1/maptile_7.spr"
+	
+tile8:
+	.incbin "DATA/map1/maptile_8.spr"
+	
+
+	
+.bank 6 slot 1
+.org $00
+tile6:
+	.incbin "DATA/map1/maptile_6.spr"
+
+tile9:
+	.incbin "DATA/map1/maptile_9.spr"
+
+tile10:
+	.incbin "DATA/map1/maptile_10.spr"
+	
+tile11:
+	.incbin "DATA/map1/maptile_11.spr"
+
+.bank 7 slot 1
+.org $00
+
+tile12:
+	.incbin "DATA/map1/maptile_12.spr"
+	
+tile13:
+	.incbin "DATA/map1/maptile_13.spr"
+	
+tile14:
+	.incbin "DATA/map1/maptile_14.spr"
+Hero0:
+	.include "DATA/C1.asm"
+	
+	
+.bank 8 slot 1
+.org $00
+Hero1_A:
+	.incbin "DATA/hero/hero1_A.spr"
+.bank 9 slot 1
+.org $00
+
+Hero1_B:
+	.incbin "DATA/hero/hero1_B.spr"
+

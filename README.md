@@ -1,2 +1,9 @@
 # PC-Engine-lib
-Library Kannagi for PCE 
+
+LKP (Library Kannagi for PCE )  
+
+It is a lib / engine for PCE, for the moment it supports:
+ - the maps with metatile
+ - sprites and animation
+ - text and score display
+ - horizontal scrolling

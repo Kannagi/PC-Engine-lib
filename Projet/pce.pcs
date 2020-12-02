@@ -1,0 +1,180 @@
+
+.DEFINE IO_BANK $0000
+.DEFINE VDC_STATUS      IO_BANK+$0000         ; VDC Status Register
+.DEFINE VDC_DATAL   	IO_BANK+$0002         ; Data Low Byte
+.DEFINE VDC_DATAH 	    IO_BANK+$0003         ; Data High Byte and Latch
+
+
+.DEFINE VDCREG_MAWR       $00           ; Memory Address Write Register (VRAM Write Address)
+.DEFINE VDCREG_MARR       $01           ; Memory Address Read Register (VRAM Read Address)
+.DEFINE VDCREG_VRWD       $02           ; VRAM Data Read/Write Register
+; (registers $03 and $04 are not used.)
+.DEFINE VDCREG_CR         $05           ; Control Register
+.DEFINE VDCREG_RCR        $06           ; Raster Counter Register
+.DEFINE VDCREG_BXR        $07           ; Background X Scroll Register
+.DEFINE VDCREG_BYR        $08           ; Background Y Scroll Register
+.DEFINE VDCREG_MWR        $09           ; Memory Width Register (BG map virtual size)
+.DEFINE VDCREG_HPR        $0A           ; Horizontal Synchronous Register (contains HDS, HSW)
+.DEFINE VDCREG_HDR        $0B           ; Horizontal Display Register (contains HDE, HDW)
+.DEFINE VDCREG_VSR        $0C           ; Vertical Synchronous Register (contains VDS, VSW)
+.DEFINE VDCREG_VDR        $0D           ; Vertical Display Register (a.k.a. VDW)
+.DEFINE VDCREG_VCR        $0E           ; Vertical Display Ending Postition Register
+.DEFINE VDCREG_DCR        $0F           ; DMA Control Register
+.DEFINE VDCREG_SOUR       $10           ; DMA Source Address Register
+.DEFINE VDCREG_DESR       $11           ; DMA Destination Address Register
+.DEFINE VDCREG_LENR       $12           ; DMA Block Length Register
+.DEFINE VDCREG_SATB       $13           ; Sprite Attribute Table Address
+
+.DEFINE MAWR	$00		;Memory Access Write Reg
+.DEFINE MARR	$01		;Memory Access Read Reg
+.DEFINE VRWR	$02		;Vram Read/Write reg
+.DEFINE VWR	 	$02		;Vram Read/Write reg
+.DEFINE VRR	 	$02		;Vram Read/Write reg
+
+
+.DEFINE CR	 	$05		;Control Reg
+.DEFINE RCR	 	$06		;Raster Control Reg
+.DEFINE BXR	 	$07		;Background X(scroll) Reg
+.DEFINE BYR	 	$08		;Background Y(scroll) Reg
+.DEFINE MWR	 	$09		;Memory Access Width Reg
+.DEFINE HPR	 	$0a		;Horizontal Synchro Reg
+.DEFINE HDR	 	$0b		;Horizontal Display Reg
+.DEFINE VSR	 	$0c		;Vertical Synchro Reg
+.DEFINE VDR	 	$0d		;Vertical Display Reg
+.DEFINE VCR	 	$0e		;Vertical Display End Reg
+.DEFINE DCR	 	$0f		;DMA Control Reg
+.DEFINE SOUR	$10		;DMA Source Address Reg
+.DEFINE DESR	$11		;DMA Destination Address Reg
+.DEFINE LENR	$12		;DMA Block Length Reg
+.DEFINE SATB	$13		;VRAM-SATB Source Address Reg 
+
+
+
+;--------------------
+.DEFINE VCE_MAIN          IO_BANK+$0400
+;---------------;---------------;----------------------------------------------;
+.DEFINE VCE_CONTROL   VCE_MAIN      ; VCE Control Register
+.DEFINE CTAL	      VCE_MAIN+2    ; Color Table Address Register
+.DEFINE CTAH	      VCE_MAIN+3    ; Color Table Address Register
+.DEFINE CTWL	      VCE_MAIN+4    ; Color Table Read/Write Register
+.DEFINE CTWH	      VCE_MAIN+5    ; Color Table Read/Write Register
+
+
+
+;------------------------------------------------------------------------------;
+
+.DEFINE IRQ_DISABLE		$1402			; IRQ Disable toggle
+.DEFINE IRQ_STATUS			 $1403			; IRQ Status (Read);
+
+
+.DEFINE TIMER_MAIN        $0C00
+;---------------;---------------;----------------------------------------------;
+.DEFINE TIMER_COUNTER     TIMER_MAIN    ; Timer Counter (read)/latch (write)
+.DEFINE TIMER_CONTROL     TIMER_MAIN+1  ; Timer Control
+
+;--------------------
+
+.MACRO PCE_VDC
+	st0 #\1
+	st1 #<\2
+	st2 #>\2
+	
+
+.ENDM
+
+.MACRO PCE_VDCS
+	st1 #<\1
+	st2 #>\1
+.ENDM
+
+.MACRO PCE_VCE_ADDR
+	ldx #<\1
+	ldy #>\1
+	stx CTAL
+	sty CTAH
+.ENDM
+
+.MACRO PCE_VCE_DATA
+	ldx #<\1
+	ldy #>\1
+	stx CTWL
+	sty CTWH
+.ENDM
+
+.MACRO PCE_VCE_CONTROL
+	lda #\1
+	sta VCE_CONTROL
+.ENDM
+
+.MACRO PCE_INIT
+	sei
+	nop
+	csh
+	nop
+	cld
+	
+	ldx #$ff
+	txs
+	
+	
+	
+	;config memory map
+	
+	;hardware I/O
+	lda #$FF
+	tam #MPR0
+	
+	;work RAM
+	lda #$F8
+	tam #MPR1
+	
+	;MPR2-MPR3 free use
+	
+	;ROM PAL BG
+	lda #$02
+	tam #MPR4
+	
+	;for RAM ext
+	lda #$F7
+	tam #MPR5
+	
+	
+	;ROM
+	lda #$01
+	tam #MPR6
+	
+	lda #$00
+	tam #MPR7
+	
+	;-----
+	
+	lda.w  VDC_STATUS
+	lda #$07
+	sta IRQ_DISABLE	;IRQ mask, INTS OFF
+	sta IRQ_STATUS
+	stz TIMER_CONTROL
+
+	PCE_VDC CR  , $0000
+
+	PCE_VDC RCR , $0040
+
+	PCE_VDC BXR , $0000
+	PCE_VDC BYR , $0000
+	
+	PCE_VDC MWR , $0010
+	
+	PCE_VDC HPR , $0202
+	PCE_VDC HDR , $041F
+	
+	PCE_VDC VSR , $0703
+	PCE_VDC VDR , $00EF
+	PCE_VDC VCR , $0003
+
+	
+	PCE_VDC DCR , $0010
+	
+	PCE_VDC SATB, $7F00
+	
+	PCE_VCE_CONTROL $00
+.ENDM
+

@@ -1,0 +1,32 @@
+
+
+LKP_Load_PalBGF:
+		
+		immw CTWL,LKP_TIA.dst
+		immw 32,LKP_TIA.size
+		
+		lda #$10
+		sta LKP_MEM_TEMP+2
+		cly
+		;------------
+		-:
+			lda LKP_MEM_TEMP+2
+			sta CTAL
+			clc
+			adc #$10
+			sta LKP_MEM_TEMP+2
+			stz CTAH
+			
+			lda [LKP_MEM_TEMP],y
+			sta LKP_TIA.src+0
+			iny
+			
+			lda [LKP_MEM_TEMP],y
+			adc #>MPR4ADDR
+			sta LKP_TIA.src+1
+			iny
+			
+			jsr LKP_TIA.opc
+			cpy #15*2
+		bne -
+	rts

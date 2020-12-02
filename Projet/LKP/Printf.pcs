@@ -1,0 +1,352 @@
+
+.MACRO compute_digit_for_base8 ARGS _base
+ 	.IF _base != 100
+ 	cmp #5*_base
+	bmi +
+		ldx #5
+		sec
+		sbc #5*_base
+		bra ++
+	+:
+ 		ldx #0
+	++:
+	.ELSE
+		ldx #0
+	.ENDIF
+	
+ 	-:
+	cmp #_base
+	bmi +
+		inx
+		sec
+		sbc #_base
+		bra -
+	+:
+	
+	
+.ENDM
+
+
+LKP_lut_pct1:
+	.db 0,$34,$68
+	
+LKP_lut_pct2:
+	.db 0,$3,$7,$10,$14,$17
+	.db $20,$24,$27,$31,$34
+
+
+	
+LKP_print_cpu:
+
+	stz LKP_MEM_TEMP+4
+	lda _vblanki
+	cmp #25
+	bmi +
+		inc LKP_MEM_TEMP+4
+	+:
+	cmp #50
+	bmi +
+		inc LKP_MEM_TEMP+4
+	+:
+	
+	cmp #75
+	bmi +
+		inc LKP_MEM_TEMP+4
+	+:
+	
+
+	sed
+	lda _vblanki+1
+	lsr
+	lsr
+	lsr 
+	lsr
+	tax
+	
+	lda.w LKP_lut_pct1,x
+	sta LKP_MEM_TEMP +2
+	
+	lda _vblanki+1
+	and #$0F
+	tax
+	lda.w LKP_lut_pct2,x
+	clc
+	adc LKP_MEM_TEMP +2
+	adc LKP_MEM_TEMP+4
+	sta LKP_MEM_TEMP
+		
+	lda #$99
+	sec 
+	sbc LKP_MEM_TEMP
+	;ina
+	sta LKP_MEM_TEMP
+	cld
+	
+	jsr LKP_printd2
+	
+	lda #'%'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	rts
+	
+LKP_printfs_draw:
+	ldx #$05
+	st0 #VWR
+	
+	ldy #0
+	-:
+		lda [LKP_MEM_TEMP],y
+		sta.w VDC_DATAL
+		stx.w VDC_DATAH
+		iny
+		
+		lda [LKP_MEM_TEMP],y
+		cmp #0
+	bne -
+	
+	rts
+	
+LKP_printhexa:
+
+	
+	and #$F
+	cmp #$A
+	bmi +
+		clc
+		adc #$7
+	+:
+	
+	rts
+	
+
+;-----------------16 bits----------------
+LKP_printh16_draw:
+
+	ldx #$05
+	st0 #VWR
+	
+	lda LKP_MEM_TEMP+1
+	lsr a
+	lsr a
+	lsr a
+	lsr a
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	
+	lda LKP_MEM_TEMP + 1
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	;---
+
+	lda LKP_MEM_TEMP+0
+	lsr a
+	lsr a
+	lsr a
+	lsr a
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	
+	lda LKP_MEM_TEMP + 0
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	rts
+
+
+;--------------------------------- 8bits-----------------------------
+
+LKP_printh8_draw:
+
+	ldx #$05
+	st0 #VWR
+
+	sta LKP_MEM_TEMP
+	lsr a
+	lsr a
+	lsr a
+	lsr a
+	sta LKP_MEM_TEMP+1
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	
+	lda LKP_MEM_TEMP + 0
+	jsr LKP_printhexa
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	rts
+
+LKP_printfu8_draw:
+
+	compute_digit_for_base8   100
+	stx LKP_MEM_TEMP + 0
+	compute_digit_for_base8    10
+	stx LKP_MEM_TEMP + 1
+	sta LKP_MEM_TEMP + 2
+	
+	ldx #$05
+	
+	st0 #VWR
+	lda LKP_MEM_TEMP + 0
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+
+	lda LKP_MEM_TEMP + 1
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	lda LKP_MEM_TEMP + 2
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	rts
+	
+LKP_printf8_draw:
+
+	stz LKP_MEM_TEMP + 3
+	cmp #0
+	bpl +
+		eor #$FF
+		ina
+		inc LKP_MEM_TEMP + 3
+		inc LKP_MEM_TEMP + 3
+		
+	+:
+	
+	compute_digit_for_base8   100
+	stx LKP_MEM_TEMP + 0
+	compute_digit_for_base8    10
+	stx LKP_MEM_TEMP + 1
+	sta LKP_MEM_TEMP + 2
+	
+	ldx #$05
+	st0 #VWR
+	
+	lda #43
+	clc
+	adc LKP_MEM_TEMP + 3
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	lda LKP_MEM_TEMP + 0
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+
+	lda LKP_MEM_TEMP + 1
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	lda LKP_MEM_TEMP + 2
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	rts
+	
+	
+	
+;-------------------decimal---------------------------
+
+.MACRO LKP_PRINT_DEC
+	
+	;------------------------
+	lda \1
+	lsr
+	lsr
+	lsr
+	lsr
+	clc
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+	lda \1
+	and #$0F
+	adc #'0'
+	sta.w VDC_DATAL
+	stx.w VDC_DATAH
+	
+.ENDM
+
+LKP_printd2:
+
+
+	st0 #VWR
+	ldx #$05
+	
+	LKP_PRINT_DEC LKP_MEM_TEMP + 0
+	
+	
+	rts
+
+
+LKP_printd4:
+
+
+	st0 #VWR
+	ldx #$05
+
+	;------------------------
+	LKP_PRINT_DEC LKP_MEM_TEMP + 1
+	LKP_PRINT_DEC LKP_MEM_TEMP + 0
+	
+	rts
+	
+LKP_printd6:
+
+
+	st0 #VWR
+	ldx #$05
+
+	;------------------------
+	LKP_PRINT_DEC LKP_MEM_TEMP + 2
+	LKP_PRINT_DEC LKP_MEM_TEMP + 1
+	LKP_PRINT_DEC LKP_MEM_TEMP + 0
+	
+	rts
+
+LKP_printd8:
+
+
+	st0 #VWR
+	ldx #$05
+
+	;------------------------
+	LKP_PRINT_DEC LKP_MEM_TEMP + 3
+	LKP_PRINT_DEC LKP_MEM_TEMP + 2
+	LKP_PRINT_DEC LKP_MEM_TEMP + 1
+	LKP_PRINT_DEC LKP_MEM_TEMP + 0
+	
+	rts
+	
+
+	

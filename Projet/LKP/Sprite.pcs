@@ -1,0 +1,16 @@
+
+LKP_Sprite_array_VDC:
+
+		st0 #MAWR
+		lda SPR_ARRAY_ADDR
+		sta LKP_ST.arg2
+		
+		lda #$7F
+		sta LKP_ST.arg3
+		
+		jsr LKP_ST.opc2
+  		st0 #VWR
+  		
+  		tia SPR_ARRAY,VDC_DATAL,$80
+  		
+  		rts

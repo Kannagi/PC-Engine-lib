@@ -1,0 +1,272 @@
+
+
+load_pal:
+		PCE_VCE_ADDR $0000
+		lda #:pallette_text  
+		tam #MPR2    
+		tia pallette_text+MPR2ADDR,CTWL,32
+		
+		
+		PCE_VCE_ADDR $0100
+		lda #:pallette_Hero1
+		tam #MPR2
+		tia pallette_Hero1+MPR2ADDR,CTWL,32
+		
+		PCE_VCE_ADDR $0000
+		PCE_VCE_DATA $0000
+	rts
+
+load_bg:
+		PCE_VDC VDCREG_MAWR,$0A00
+		st0 #VDCREG_VRWD
+		
+		;128x64
+		;tile0
+		lda #:tile0
+		tam #MPR3
+		tia tile0+MPR3ADDR,VWR,$1000
+		
+		;tile1
+		lda #:tile1
+		tam #MPR3
+		tia tile1+MPR3ADDR,VWR,$1000
+		
+		;128x32
+		;tile2
+		lda #:tile2
+		tam #MPR3
+		tia tile2+MPR3ADDR,VWR,$800
+		
+		;tile3
+		lda #:tile3
+		tam #MPR3
+		tia tile3+MPR3ADDR,VWR,$800
+		
+		;tile4
+		lda #:tile4
+		tam #MPR3
+		tia tile4+MPR3ADDR,VWR,$800
+		
+		;tile5
+		lda #:tile5
+		tam #MPR3
+		tia tile5+MPR3ADDR,VWR,$800
+		
+		;tile6
+		lda #:tile6
+		tam #MPR3
+		tia tile6+MPR3ADDR,VWR,$800
+		
+		;-----------------------------------------------
+		
+		;128x64
+		;tile7
+		lda #:tile7
+		tam #MPR3
+		tia tile7+MPR3ADDR,VWR,$1000
+		
+		;tile8
+		lda #:tile8
+		tam #MPR3
+		tia tile8+MPR3ADDR,VWR,$1000
+		
+		;128x32
+		;tile9
+		lda #:tile9
+		tam #MPR3
+		tia tile9+MPR3ADDR,VWR,$800
+		
+		;tile10
+		lda #:tile10
+		tam #MPR3
+		tia tile10+MPR3ADDR,VWR,$800
+		
+		;tile11
+		lda #:tile11
+		tam #MPR3
+		tia tile11+MPR3ADDR,VWR,$800
+		
+		;tile12
+		lda #:tile12
+		tam #MPR3
+		tia tile12+MPR3ADDR,VWR,$800
+		
+		;128x16
+		;tile13
+		lda #:tile13
+		tam #MPR3
+		tia tile13+MPR3ADDR,VWR,$400
+		
+		;tile14
+		lda #:tile14
+		tam #MPR3
+		tia tile14+MPR3ADDR,VWR,$400
+		
+	rts
+
+
+.MACRO DATA_METATILE_SPR
+	.dw $400*\1 +  ($80)*\2,$400*\3 +  ($80)*\4,$400*\5 +  ($80)*\6,$0000
+.ENDM
+.MACRO DATA_METATILE_SPR4
+	.dw $400*\1 +  ($80)*\2,$400*\3 +  ($80)*\4,$400*\5 +  ($80)*\6,$400*\7 +  ($80)*\8
+	
+.ENDM
+MT_Hero_1:
+	DATA_METATILE_SPR 0,0,1,0,6,5
+	DATA_METATILE_SPR 0,2,1,2,6,5
+
+MT_Hero_3:
+	DATA_METATILE_SPR 6,2,6,2,6,2
+	DATA_METATILE_SPR 7,2,6,2,6,2
+	
+MT_Hero_2:
+	DATA_METATILE_SPR 0,0,1,0,2,0
+	DATA_METATILE_SPR 0,2,1,2,2,2
+	DATA_METATILE_SPR 0,4,1,4,2,4
+	DATA_METATILE_SPR 0,6,1,6,2,6
+	
+	
+MT_Hero_4:
+	DATA_METATILE_SPR4 0,4,1,4,6,5,2,4
+	DATA_METATILE_SPR4 0,6,1,6,6,5,2,6
+
+MT_Hero_5:
+	DATA_METATILE_SPR 3,0,4,0,2,0
+	DATA_METATILE_SPR 3,2,4,2,2,2
+	DATA_METATILE_SPR 3,4,4,4,2,4
+	DATA_METATILE_SPR 3,6,4,6,2,6
+	
+MT_Hero_6:
+	DATA_METATILE_SPR 5,0,6,0,7,0
+	DATA_METATILE_SPR 5,2,6,2,7,2
+	DATA_METATILE_SPR 5,4,6,4,7,4
+	DATA_METATILE_SPR 5,6,6,6,7,6
+	
+MT_Hero_7:
+	DATA_METATILE_SPR 6,0,7,0,6,2
+	
+LKP_Sprites_Update:	
+
+	lda LKP_DMA.enable,y
+	cmp #0
+	bne +
+		rts
+	+:
+	
+	lda LKP_DMAT
+	bit #$F0
+	beq +
+		rts
+	+:
+	clc
+	adc LKP_DMA.tsz,y
+	sta LKP_DMAT
+
+	lda LKP_DMA.bank,y
+	tam #MPR3
+	
+	lda LKP_DMA.hsz,y
+	sta LKP_MEM_TEMP+4
+		
+	st0 #MAWR
+	lda LKP_DMA.vram+0,y
+	sta LKP_ST.arg2
+	
+	lda LKP_DMA.vram+1,y
+	sta LKP_ST.arg3
+	
+	jsr LKP_ST.opc2
+	
+	immw VWR,LKP_TIA.dst
+	
+	indwy LKP_DMA.size,LKP_TIA.size
+	indwy LKP_DMA.src,LKP_MEM_TEMP
+	indwy LKP_DMA.lut,LKP_MEM_TEMP+2
+	
+	
+	
+	
+	st0 #VWR
+	cly
+	;------------
+	-:
+		lda [LKP_MEM_TEMP+2],y
+		clc
+		adc LKP_MEM_TEMP
+		sta LKP_TIA.src+0
+		iny
+		
+		lda [LKP_MEM_TEMP+2],y
+		clc
+		adc LKP_MEM_TEMP+1
+		adc #>MPR3ADDR
+		sta LKP_TIA.src+1
+		iny
+		
+		jsr LKP_TIA.opc
+		cpy LKP_MEM_TEMP+4
+	bne -
+	
+	rts
+
+
+
+load_sprites:	
+
+		;font
+		lda #:font1
+		tam #MPR3
+		
+		PCE_VDC MAWR,$5200
+		
+		st0 #VDC_VRWR
+		
+		tia font1+MPR3ADDR,VWR,$800
+
+		
+		
+
+		
+		
+		
+	rts
+	
+update_pal:
+
+
+	lda animpal_i
+	ina
+	cmp #4
+	bne +
+		lda animpal
+		clc
+		adc #2
+		cmp #30
+		bne ++
+			cla
+		++:
+		sta animpal
+		cla
+	+:
+	sta animpal_i
+	
+	immw pallette_tile14+MPR2ADDR,$00
+	
+	PCE_VCE_ADDR $00F0
+	
+	ldx #16
+	ldy animpal
+	-:
+		lda [$00],y
+		sta.w CTWL
+		iny
+		
+		lda [$00],y
+		sta.w CTWH
+		iny
+		
+		dex
+	bne -
+	
+	rts

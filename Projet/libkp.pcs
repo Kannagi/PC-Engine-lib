@@ -1,0 +1,9 @@
+
+;Library Kannagi for PCE v0.1
+	.include "LKP/Printf.pcs"
+	.include "LKP/Scrolling.pcs"
+	.include "LKP/Sprite.pcs"
+	.include "LKP/Joypad.pcs"
+	.include "LKP/Load.pcs"
+	.include "LKP/Init.pcs"
+	.include "LKP/Background.pcs"

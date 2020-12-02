@@ -1,0 +1,121 @@
+
+LKP_ScrollingX:
+
+	lda LKP_BG.x+1
+	sta LKP_MEM_TEMP+7
+	
+	lda LKP_BG.dirx
+	cmp #$01
+	bne +
+		lda LKP_BG.x+1
+		dea
+		sta LKP_MEM_TEMP+7
+	+:
+	
+	indw LKP_BG.index,LKP_MEM_TEMP
+	
+	ldy LKP_MEM_TEMP+7
+	lda [LKP_MEM_TEMP+0],y
+	asl
+
+	sta LKP_MEM_TEMP+6
+	
+	lda LKP_BG.bank
+	tam #MPR3
+	    
+	stz LKP_MEM_TEMP+0
+	stz LKP_MEM_TEMP+2
+	
+	lda #>(MPR3ADDR+$000)
+	clc
+	adc LKP_MEM_TEMP+6
+	adc LKP_BG.offset
+	sta LKP_MEM_TEMP+1
+	
+	lda #>(MPR3ADDR+$100)
+	clc
+	adc LKP_MEM_TEMP+6
+	adc LKP_BG.offset
+	sta LKP_MEM_TEMP+3
+
+	st0 #MAWR
+	lda #0
+	sta LKP_ST.arg3
+	
+	
+	lda LKP_MEM_TEMP+7
+	bit #$01
+	beq +
+		stz LKP_MEM_TEMP+6
+		bra ++
+	+:
+		lda #$20
+		sta LKP_MEM_TEMP+6
+	++:
+	
+	lda LKP_BG.x
+	lsr
+	lsr
+	lsr
+	clc
+	adc LKP_MEM_TEMP+6
+	sta LKP_MEM_TEMP+6
+	and #$3F
+	
+	clc
+	sta LKP_ST.arg2
+	
+	jsr LKP_ST.opc2
+	
+	PCE_VDC CR  , $10CC
+	st0 #VWR
+	
+	lda LKP_MEM_TEMP+6
+	bit #$01
+	bne +
+		stz LKP_MEM_TEMP+6
+		bra ++
+	+:
+		lda #1
+		sta LKP_MEM_TEMP+6
+	++:
+	
+	lda LKP_BG.x
+	lsr
+	lsr
+	lsr
+	lsr
+	tay
+	ldx #14
+	-:
+		lda [LKP_MEM_TEMP],y
+		clc
+		adc LKP_MEM_TEMP+6
+		sta LKP_MEM_TEMP+4
+		sta.w VDC_DATAL
+		
+		lda [LKP_MEM_TEMP+2],y
+		sta LKP_MEM_TEMP+5
+		sta.w VDC_DATAH
+		
+		
+		lda LKP_MEM_TEMP+4
+		clc
+		adc #$10
+		sta.w VDC_DATAL
+		
+		lda LKP_MEM_TEMP+5
+		adc #0
+		sta.w VDC_DATAH
+		
+		tya
+		clc
+		adc #$10
+		tay
+		
+		dex
+		cpx #0
+	bne -
+	
+	PCE_VDC CR  , $00CC
+	rts

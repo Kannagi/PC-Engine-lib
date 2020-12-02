@@ -1,0 +1,134 @@
+
+
+
+LKP_BG_initsc:
+
+
+	indw LKP_BG.index,LKP_MEM_TEMP
+	
+	lda  LKP_BG.x+1
+	dea
+	tay
+	
+	lda [LKP_MEM_TEMP+0],y
+	asl
+	sta LKP_MEM_TEMP+6
+	
+	lda LKP_BG.bank
+	tam #MPR3
+	    
+	stz LKP_MEM_TEMP+0
+	stz LKP_MEM_TEMP+2
+	
+	lda #>(MPR3ADDR+$000)
+	clc
+	adc LKP_MEM_TEMP+6
+	adc LKP_BG.offset
+	sta LKP_MEM_TEMP+1
+	
+	lda #>(MPR3ADDR+$100)
+	clc
+	adc LKP_MEM_TEMP+6
+	adc LKP_BG.offset
+	sta LKP_MEM_TEMP+3
+
+	tya
+	bit #01
+	beq +
+		PCE_VDC MAWR,$0000
+		bra ++
+	+:	
+		PCE_VDC MAWR,$0020
+	++:
+	
+	
+	st0 #VWR
+	
+	lda #14
+	sta LKP_MEM_TEMP+7
+	
+	stz LKP_MEM_TEMP+6
+	--:
+	ldx #16
+	ldy LKP_MEM_TEMP+6
+	-:
+		lda [LKP_MEM_TEMP],y
+		sta LKP_MEM_TEMP+4
+		sta.w VDC_DATAL
+		
+		lda [LKP_MEM_TEMP+2],y
+		sta LKP_MEM_TEMP+5
+		sta.w VDC_DATAH
+		iny
+		
+		lda LKP_MEM_TEMP+4
+		ina
+		sta.w VDC_DATAL
+		
+		lda LKP_MEM_TEMP+5
+		sta.w VDC_DATAH
+		
+		dex
+	bne -
+	
+	ldx #16
+	lda #$A0
+	-:
+		
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+		
+		dex
+	bne -
+	
+	ldx #16
+	ldy LKP_MEM_TEMP+6
+	-:
+		lda [LKP_MEM_TEMP],y
+		clc
+		adc #$10
+		sta LKP_MEM_TEMP+4
+		sta.w VDC_DATAL
+		
+		lda [LKP_MEM_TEMP+2],y
+		adc #0
+		sta LKP_MEM_TEMP+5
+		sta.w VDC_DATAH
+		iny
+		
+		lda LKP_MEM_TEMP+4
+		ina
+		sta.w VDC_DATAL
+		
+		lda LKP_MEM_TEMP+5
+		sta.w VDC_DATAH
+		
+		dex
+	bne -
+	
+	ldx #16
+	lda #$A0
+	-:
+		
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+
+		sta.w VDC_DATAL
+		sta.w VDC_DATAH
+		
+		dex
+	bne -
+	
+	lda LKP_MEM_TEMP+6
+	clc
+	adc #$10
+	sta LKP_MEM_TEMP+6
+	
+	dec LKP_MEM_TEMP+7
+	bne --
+
+	rts
+

@@ -1,0 +1,80 @@
+
+
+.MACRO LKP_joypad_event
+	lda \3	; read joypad
+	bit #\1
+	bne +
+		stz LKP_JOYPAD+ \2
+		bra ++
+	+:
+		lda LKP_JOYPAD + \2
+		cmp #$00
+		bne +
+			lda #01
+			sta LKP_JOYPAD + \2
+			bra ++
+		+:
+		
+		lda #02
+		sta LKP_JOYPAD + \2
+	++:
+.ENDM
+
+
+
+LKP_joypad:
+	
+	LKP_joypad_event $01 $00 LKP_JOYPAD2 ; B1
+	LKP_joypad_event $02 $01 LKP_JOYPAD2 ; B2
+	LKP_joypad_event $04 $02 LKP_JOYPAD2 ; SELECT
+	LKP_joypad_event $08 $03 LKP_JOYPAD2 ; START
+	
+	LKP_joypad_event $01 $04 LKP_JOYPAD1 ; UP
+	LKP_joypad_event $02 $05 LKP_JOYPAD1 ; RIGHT
+	LKP_joypad_event $04 $06 LKP_JOYPAD1 ; DOWN
+	LKP_joypad_event $08 $07 LKP_JOYPAD1 ; LEFT
+	
+	
+	rts
+	
+	
+
+LKP_READ_IO:
+	pha
+	phx
+	
+	lda #$01
+	sta $1000
+     
+	lda #$03
+	sta $1000
+	
+	lda #$01
+	sta $1000
+
+	pha
+	pla
+	nop
+	nop
+
+	lda $1000
+	eor #$0f
+	sta LKP_JOYPAD1
+
+
+
+	stz $1000
+	pha
+	pla
+	nop
+	nop
+	lda $1000
+	eor #$0f
+	sta LKP_JOYPAD2
+      
+
+			
+	plx
+	pla   
+	 
+    rts 

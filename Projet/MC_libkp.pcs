@@ -1,0 +1,3 @@
+
+	.include "LKP/MC_Printf.pcs"
+	.include "LKP/MC_Load.pcs"

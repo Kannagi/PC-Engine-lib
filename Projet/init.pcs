@@ -1,0 +1,27 @@
+
+	
+; Word 0 : ------aaaaaaaaaa ;y
+; Word 1 : ------bbbbbbbbbb ;x
+; Word 2 : -----ccccccccccd ;index   Adresse VRAM/$20
+; Word 3 : f-hh    f--w     o---      pppp
+init_game:
+/*
+	immw $0080,SPR_ARRAY.x
+	immw $00D8,SPR_ARRAY.y
+	immw $02B0,SPR_ARRAY.tile
+	immw $1180,SPR_ARRAY.palfs
+	
+	immw $0080,SPR_ARRAY.x+SPRT*1
+	immw $00F8,SPR_ARRAY.y+SPRT*1
+	immw $02B8,SPR_ARRAY.tile+SPRT*1
+	immw $0180,SPR_ARRAY.palfs+SPRT*1
+	*/
+	
+	immw $0080,LKP_HERO.x
+	immw $00D8,LKP_HERO.y
+	immw $02B0,LKP_HERO.tile
+	immw $0080,LKP_HERO.palfs
+
+
+	rts
+

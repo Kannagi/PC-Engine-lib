@@ -1,0 +1,350 @@
+
+
+pause:
+	jsr wait_vblank
+	jsr LKP_joypad
+	lda LKP_JOYPAD.START
+	cmp #1
+	bne +
+		rts
+	+:
+	
+	jmp pause
+	rts
+
+
+DATA_HERO_ANIM_ROT:
+
+	.db $00,$00,$00,$00
+	.db $08,$08,$08,$08
+	.db $80,$80,$80,$80
+	.db $88,$88,$88,$88
+
+Gameplay:
+
+	lda LKP_JOYPAD.START
+	cmp #1
+	bne +
+		jsr pause
+	+:
+	
+	stz LKP_anim.act
+	stz MEM_TEMP
+	;x
+	indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*0,0
+	indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*1,0
+	
+	;y
+	indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*0,0
+	indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*1,32
+	
+	;tile
+	indaddw LKP_HERO.tile,SPR_ARRAY.tile+SPRT*0,0
+	indaddw LKP_HERO.tile,SPR_ARRAY.tile+SPRT*1,8
+	
+	;3eme
+	indaddw LKP_HERO.tile,SPR_ARRAY.tile+SPRT*2,12
+	stz SPR_ARRAY.y+SPRT*2
+	
+	indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*2,0
+	
+	lda LKP_HERO.palfs
+	sta SPR_ARRAY.palfs+SPRT*0
+	sta SPR_ARRAY.palfs+SPRT*1
+	sta SPR_ARRAY.palfs+SPRT*2
+	
+	lda LKP_HERO.palfs+1
+	ora #$11
+	sta SPR_ARRAY.palfs+1+SPRT*0
+	
+	lda LKP_HERO.palfs+1
+	ora #$1
+	sta SPR_ARRAY.palfs+1+SPRT*1
+	
+	lda LKP_HERO.palfs+1
+	ora #$1
+	sta SPR_ARRAY.palfs+1+SPRT*2
+	;--------------
+	lda LKP_HERO.jump
+	cmp #0
+	bne +
+	
+	lda LKP_JOYPAD.B2
+	cmp #1
+	bne +
+		lda #1
+		sta LKP_HERO.jump
+		
+	+:
+	
+	
+	lda LKP_HERO.jump
+	cmp #0
+	beq +
+		lda #9
+		sta LKP_anim.act
+		
+		jsr Gameplay_Jump
+		
+		bra ++
+	+:
+		jsr Gameplay_Move
+	++:
+	
+	
+	 
+	lda LKP_HERO.jump
+	cmp #30
+	bmi +
+		lda  LKP_HERO.y
+		clc
+		adc #4
+		sta  LKP_HERO.y
+	+:
+		
+	
+	
+	lda LKP_HERO.jump
+	cmp #60-3
+	bne +
+		stz LKP_HERO.jump
+	+:
+	
+	;
+	
+	;-----------
+	lda #256-96
+	sta MEM_TEMP+1
+	lda LKP_BG.x+1
+	cmp #14
+	bne +
+		stz LKP_BG.x
+		lda #256-80
+		sta MEM_TEMP+1
+	+:
+	
+	lda LKP_HERO.x
+	cmp MEM_TEMP+1
+	bcc +
+		dec MEM_TEMP
+		dec MEM_TEMP
+		addiw LKP_BG.x,2
+		lda #0
+		sta LKP_BG.dirx
+	+:
+	
+	lda LKP_HERO.x
+	cmp #32
+	bcs +
+		inc MEM_TEMP
+		inc MEM_TEMP
+	+:
+	
+	
+	lda  LKP_HERO.x
+	clc
+	adc MEM_TEMP
+	sta  LKP_HERO.x
+	
+	lda LKP_BG.x+1
+	cmp #14
+	bne +
+		stz LKP_BG.x
+	+:
+	
+	rts
+	
+	
+Gameplay_Jump:
+
+	lda LKP_JOYPAD.RIGHT
+	cmp #2
+	bne +
+		inc MEM_TEMP
+		inc MEM_TEMP
+	+:
+	
+	lda LKP_JOYPAD.LEFT
+	cmp #2
+	bne +
+		dec MEM_TEMP
+		dec MEM_TEMP
+	+:
+	
+	inc LKP_HERO.jump
+	lda  LKP_HERO.y
+	sec
+	sbc #2
+	sta  LKP_HERO.y
+	stz SPR_ARRAY.y+SPRT*1
+	phy
+	lda LKP_HERO.jump
+	and #$0F
+	
+	tay
+	lda DATA_HERO_ANIM_ROT,y
+	sta MEM_TEMP+2
+	ply
+	
+	lda SPR_ARRAY.palfs+1+SPRT*0
+	ora MEM_TEMP+2
+	sta SPR_ARRAY.palfs+1+SPRT*0
+	
+	rts
+Gameplay_Move:
+
+	lda LKP_JOYPAD.RIGHT
+	cmp #2
+	bne +
+		lda #1
+		sta LKP_anim.act
+		
+		lda LKP_HERO.palfs+1+SPRT*0
+		and #$FF-$8
+		sta LKP_HERO.palfs+1+SPRT*0
+		inc MEM_TEMP
+		inc MEM_TEMP
+	+:
+
+	lda LKP_JOYPAD.LEFT
+	cmp #2
+	bne +
+		lda #1
+		sta LKP_anim.act
+		
+		lda LKP_HERO.palfs+1+SPRT*0
+		ora #$08
+		sta LKP_HERO.palfs+1+SPRT*0
+		
+		dec MEM_TEMP
+		dec MEM_TEMP
+	+:
+	
+	
+	lda MEM_TEMP
+	cmp #0
+	bne ++
+	
+		lda LKP_JOYPAD.UP
+		cmp #2
+		bne +
+			lda #3
+			sta LKP_anim.act
+			
+			indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*0,-16
+			indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*2,16
+			
+			lda LKP_JOYPAD.B1
+			cmp #2
+			bne +
+				lda #7
+				sta LKP_anim.act
+			
+			bra +++
+		+:
+
+		lda LKP_JOYPAD.DOWN
+		cmp #2
+		bne +
+			lda #2
+			sta LKP_anim.act
+			
+			jsr Gameplay_Down
+			
+			bra +++
+		+:
+		
+		lda LKP_JOYPAD.B1
+		cmp #2
+		bne +
+			lda #6
+			sta LKP_anim.act
+			
+			
+		+:
+	
+		bra +++
+	++:
+		lda LKP_JOYPAD.UP
+		cmp #2
+		bne +
+			lda #4
+			sta LKP_anim.act
+		+:
+
+		lda LKP_JOYPAD.DOWN
+		cmp #2
+		bne +
+			lda #5
+			sta LKP_anim.act
+		+:
+	
+	+++:
+	
+	rts
+Gameplay_Down
+
+	;y
+	indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*0,32
+	indaddw LKP_HERO.y,SPR_ARRAY.y+SPRT*1,32
+	
+	lda LKP_HERO.palfs+1
+	bit #$08
+	bne ++
+		;x
+		indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*0,0-16
+		indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*1,32-16
+		
+		bra +++
+	++:
+		;x
+		indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*0,16
+		indaddw LKP_HERO.x,SPR_ARRAY.x+SPRT*1,0
+	+++:
+
+	lda LKP_HERO.palfs+1
+	ora #$1
+	sta SPR_ARRAY.palfs+1+SPRT*0
+	
+	lda LKP_HERO.palfs+1
+	sta SPR_ARRAY.palfs+1+SPRT*1
+	
+	indaddw LKP_HERO.tile,SPR_ARRAY.tile+SPRT*1,4
+	
+	lda LKP_JOYPAD.B1
+	cmp #2
+	bne +
+		lda #8
+		sta LKP_anim.act
+	+:
+	
+	rts
+	
+	
+	
+	
+	
+	
+	
+	
+	;-------
+	lda LKP_JOYPAD.RIGHT
+	cmp #2
+	bne +
+		addiw LKP_BG.x,4
+		lda #0
+		sta LKP_BG.dirx
+	+:
+	
+	lda LKP_JOYPAD.LEFT
+	cmp #2
+	bne +
+		subiw LKP_BG.x,4
+		lda #1
+		sta LKP_BG.dirx
+	+:
+	
+	
+	
+	
+	rts
